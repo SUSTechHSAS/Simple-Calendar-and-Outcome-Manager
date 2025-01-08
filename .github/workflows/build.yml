@@ -95,3 +95,40 @@ jobs:
       with:
         name: windows-release
         path: windows-release.zip
+
+  build-on-macos:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Cache
+      uses: actions/cache@v4.2.0
+      env:
+        cache-name: cache-flutter
+      with:
+        path: |
+          ./flutter_scom/build/
+          ./flutter_scom/.dart_tool/
+          ~/.pub-cache/
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./flutter_scom/lib/main.dart') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+
+    - name: flutter-download
+      run: curl -O https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/flutter_macos_arm64_3.27.1-stable.zip
+    - name: flutter-install
+      run: unzip ./flutter_macos_arm64_3.27.1-stable.zip -d .
+    - name: build-flutter-scom
+      run: cd flutter_scom && ../flutter/bin/flutter config --no-analytics && ../flutter/bin/flutter config --no-cli-animations && ../flutter/bin/flutter pub get && ../flutter/bin/flutter build macos
+    - name: build-database
+      run: cd database && mkdir cmake-build-debug && cmake -S . -B ./cmake-build-debug && cmake --build ./cmake-build-debug --target SCOM_database
+    
+    - name: Upload
+      uses: actions/upload-artifact@v4.4.3
+      with:
+        name: macos-release
+        path: |
+          ./flutter_scom/build/
+          ./database/cmake-build-debug
