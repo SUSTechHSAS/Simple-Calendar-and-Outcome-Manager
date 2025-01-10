@@ -133,17 +133,12 @@ jobs:
           ./flutter_scom/build/
           ./database/cmake-build-debug
           
-    - name: download-build
-      uses: actions/download-artifact@v4.1.8
-      with:
-        # Name of the artifact to download. If unspecified, all artifacts for the run are downloaded.
-        name: macos-release
-        # Destination path. Supports basic tilde expansion. Defaults to $GITHUB_WORKSPACE
-        path: ./release/
+    - name: bundle
+      run: tar -zcvf ./macos-release.tar.gz ./flutter_scom/build/macos/
         
     - uses: ncipollo/release-action@v1
       with:
-        artifacts: "./release/*"
+        artifacts: "./macos-release.tar.gz"
         token: ${{ secrets.RELEASE_TOKEN }}
         commit: "refs/heads/main"
         prerelease: true
